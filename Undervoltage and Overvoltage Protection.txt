@@ -1,0 +1,63 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// LCD setup
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// Pins
+const int voltageSensorPin = A0;
+const int potPin = A1;
+const int relayPin = 8;
+const int ledPin = 9;
+
+float calibrationFactor = 5.0 / 1023.0;  // ADC step
+
+void setup() {
+  pinMode(relayPin, OUTPUT);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(relayPin, LOW);
+  digitalWrite(ledPin, LOW);
+
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("Voltage Monitor");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  // Read voltage from sensor
+  int sensorValue = analogRead(voltageSensorPin);
+  float voltage = sensorValue * calibrationFactor * 5.0;  // Adjust scale if needed
+
+  // Read potentiometer value (for debug/display only here)
+  int potValue = analogRead(potPin);
+  float potVoltage = potValue * calibrationFactor * 5.0;  // Optional: for checking pot connection
+
+  lcd.setCursor(0, 0);
+  lcd.print("V:");
+  lcd.print(voltage, 2);
+  lcd.print(" PV:");
+  lcd.print(potVoltage, 1);  // Show pot voltage to verify it's working
+
+  // Voltage condition check
+  if (voltage > 10.0) {
+    digitalWrite(relayPin, LOW);
+    digitalWrite(ledPin, LOW);
+    lcd.setCursor(0, 1);
+    lcd.print("Overvoltage      ");
+  } else if (voltage < 5.0) {
+    digitalWrite(relayPin, LOW);
+    digitalWrite(ledPin, LOW);
+    lcd.setCursor(0, 1);
+    lcd.print("Undervoltage     ");
+  } else {
+    digitalWrite(relayPin, HIGH);
+    digitalWrite(ledPin, HIGH);
+    lcd.setCursor(0, 1);
+    lcd.print("Normal Voltage   ");
+  }
+
+  delay(1000);
+}
